@@ -25,7 +25,7 @@ class Snake:
 
         self.lr = 0.1
         self.discount_factor = 0.9
-        self.epsilon = 0.8
+        self.epsilon = 0.1
 
     def get_state_index(self, state):
         unique_number = (state[0] * 2**4 * 39 +
@@ -171,6 +171,7 @@ class Snake:
         
         if self.check_out_of_board():
             # TODO: Punish the snake for getting out of the board
+            reward -= 100
             win_other = True
             reset(self, other_snake)
         
@@ -178,9 +179,11 @@ class Snake:
             self.addCube()
             snack = Cube(randomSnack(ROWS, self), color=(0, 255, 0))
             # TODO: Reward the snake for eating
+            reward += 100
             
         if self.head.pos in list(map(lambda z: z.pos, self.body[1:])):
             # TODO: Punish the snake for hitting itself
+            reward -= 10
             win_other = True
             reset(self, other_snake)
             
@@ -189,16 +192,19 @@ class Snake:
             
             if self.head.pos != other_snake.head.pos:
                 # TODO: Punish the snake for hitting the other snake
+                reward -= 10
                 win_other = True
             else:
                 if len(self.body) > len(other_snake.body):
                     # TODO: Reward the snake for hitting the head of the other snake and being longer
+                    reward += 50
                     win_self = True
                 elif len(self.body) == len(other_snake.body):
                     # TODO: No winner
-                    pass
+                    reward -= 5
                 else:
                     # TODO: Punish the snake for hitting the head of the other snake and being shorter
+                    reward -= 10
                     win_other = True
                     
             reset(self, other_snake)
@@ -206,6 +212,7 @@ class Snake:
         return snack, reward, win_self, win_other
     
     def reset(self, pos):
+        self.epsilon *= 0.9
         self.head = Cube(pos, color=self.color)
         self.body = []
         self.body.append(self.head)

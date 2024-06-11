@@ -44,7 +44,8 @@ def main():
 
         snack, reward_1, win_1, win_2 = snake_1.calc_reward(snack, snake_2)
         snack, reward_2, win_2, win_1 = snake_2.calc_reward(snack, snake_1)
-
+        # print(reward_1)
+        # print(reward_2)
         snake_1.update_q_table(state_1, action_1, new_state_1, reward_1)
         snake_2.update_q_table(state_2, action_2, new_state_2, reward_2)
         
