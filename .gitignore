@@ -12,3 +12,6 @@ A5/qenv/share/
 A5/qenv/models
 A5/qenv/models.vectors.npy
 A5/qenv/pyvenv.cfg
+*.mp4
+*.pyc
+A6/snake_code/tuple_test.py
