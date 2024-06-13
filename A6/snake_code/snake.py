@@ -21,38 +21,47 @@ class Snake:
         try:
             self.q_table = np.load(file_name)
         except:
-            self.q_table = np.zeros((1248, 4))
+            self.q_table = np.zeros((2, 2, 2, 2, 12, 4))
 
         self.lr = 0.1
-        self.discount_factor = 0.9
-        self.epsilon = 0.1
+        self.discount_factor = 0.8
+        self.epsilon = 0.4
 
-    def get_state_index(self, state):
-        unique_number = (state[0] * 2**4 * 39 +
-                    state[1] * 2**3 * 39 +
-                    state[2] * 2**2 * 39 +
-                    state[3] * 39 +
-                    state[4])
-    
-        return unique_number
+    def decay_epsilon(self):
+        self.epsilon *= 0.5
+
+    def decay_lr(self):    
+        self.lr *= 0.98    
+
     
     def get_optimal_policy(self, state):
-        # TODO: Get optimal policy
-        idx = self.get_state_index(state)
-        return np.argmax(self.q_table[idx])
+        # Get the Q-values for the given state
+        q_values = self.q_table[tuple(state)]
+
+        # Find the indices of all maximum Q-values
+        max_indices = np.flatnonzero(q_values == np.max(q_values))
+
+        # Randomly select one of the maximum indices
+        chosen_index = np.random.choice(max_indices)
+
+        return chosen_index
+        # return np.argmax(self.q_table[tuple(state)])
 
     def make_action(self, state):
         chance = random.random()
         if chance < self.epsilon:
             action = random.randint(0, 3)
+            # print("chance : ", action)
         else:
             action = self.get_optimal_policy(state)
+            # if action != 0:
+            # print("policy : ", action)
         return action
 
     def update_q_table(self, state, action, next_state, reward):
         # TODO: Update Q-table
-        recentVal = reward + self.discount_factor*(np.max(self.q_table[self.get_state_index(next_state)]))
-        self.q_table[self.get_state_index(state)][action] = (1 - self.lr)*(self.q_table[self.get_state_index(state)][action]) + self.lr*recentVal
+        sample = reward + self.discount_factor*(np.max(self.q_table[tuple(next_state)]))
+        self.q_table[tuple(state)][action] = (1 - self.lr)*self.q_table[tuple(state)][action] + self.lr*sample
 
     
 
@@ -60,6 +69,7 @@ class Snake:
         a1 = [0, 0]
         a2 = [0, 0]
         a3 = [0, 0]
+        a4 = [0, 0]
         if self.dirnx == 0:
             a1[0] = self.head.pos[0] - 1
             a1[1] = self.head.pos[1]
@@ -67,6 +77,8 @@ class Snake:
             a2[1] = self.head.pos[1]
             a3[0] = self.head.pos[0]
             a3[1] = self.head.pos[1] + self.dirny
+            a4[0] = self.head.pos[0]
+            a4[1] = self.head.pos[1] - self.dirny
         elif self.dirny == 0:
             a1[0] = self.head.pos[0]
             a1[1] = self.head.pos[1] - 1
@@ -74,8 +86,10 @@ class Snake:
             a2[1] = self.head.pos[1] + 1
             a3[0] = self.head.pos[0] + self.dirnx
             a3[1] = self.head.pos[1]
+            a4[0] = self.head.pos[0] - self.dirnx
+            a4[1] = self.head.pos[1]
 
-        return a1, a2, a3
+        return a1, a2, a3, a4
     
     def check_wall_collision(self, pos):
         if pos[0] == 0 or pos[0] == ROWS-1 or pos[1] == 0 or pos[1] == ROWS-1:
@@ -95,30 +109,50 @@ class Snake:
             return 0
 
     def get_direction_of_snack(self, snack):
-        if snack.pos[0] <= self.head.pos[0]:
-            if snack.pos[1] <= self.head.pos[1]:
-                return 0
+        if self.dirnx == 0:
+            if self.dirny == -1:
+                if self.head.pos[0] == snack.pos[0]:
+                    return 1
+                elif self.head.pos[0] > snack.pos[0]:
+                    return 0
+                else:
+                    return 2
             else:
-                return 2
+                if self.head.pos[0] == snack.pos[0]:
+                    return 4
+                elif self.head.pos[0] > snack.pos[0]:
+                    return 3
+                else:
+                    return 5    
         else:
-            if snack.pos[1] <= self.head.pos[1]:
-                return 1
+            if self.dirnx == 1:
+                if self.head.pos[1] == snack.pos[1]:
+                    return 7
+                elif self.head.pos[1] > snack.pos[1]:
+                    return 6
+                else:
+                    return 8
             else:
-                return 3
+                if self.head.pos[1] == snack.pos[1]:
+                    return 10
+                elif self.head.pos[1] > self.head.pos[1]:
+                    return 9
+                else:
+                    return 11    
 
     def get_distance_to_snack(self, snack):
         return abs(self.head.pos[0] - snack.pos[0]) + abs(self.head.pos[1] - snack.pos[1])        
 
     def move(self, snack : Cube, other_snake):
-        state = []
-        a1, a2, a3 = self.get_around_head_positions()
-        state.append(self.check_barrier(a1, other_snake))
-        state.append(self.check_barrier(a2, other_snake))
-        state.append(self.check_barrier(a3, other_snake))
-        state.append(self.get_direction_of_snack(snack))
-        state.append(self.get_distance_to_snack(snack))
+        self.state = []
+        a1, a2, a3, a4 = self.get_around_head_positions()
+        self.state.append(self.check_barrier(a1, other_snake))
+        self.state.append(self.check_barrier(a2, other_snake))
+        self.state.append(self.check_barrier(a3, other_snake))
+        self.state.append(self.check_barrier(a4, other_snake))
+        self.state.append(self.get_direction_of_snack(snack))
 
-        action = self.make_action(state)
+        action = self.make_action(self.state)
 
         if action == 0: # Left
             self.dirnx = -1
@@ -149,13 +183,13 @@ class Snake:
 
         # TODO: Create new state after moving and other needed values and return them
         new_state = []
-        a1, a2, a3 = self.get_around_head_positions()
+        a1, a2, a3, a4 = self.get_around_head_positions()
         new_state.append(self.check_barrier(a1, other_snake))
         new_state.append(self.check_barrier(a2, other_snake))
         new_state.append(self.check_barrier(a3, other_snake))
+        new_state.append(self.check_barrier(a4, other_snake))
         new_state.append(self.get_direction_of_snack(snack))
-        new_state.append(self.get_distance_to_snack(snack))
-        return state, new_state, action
+        return self.state, new_state, action
 
     
     def check_out_of_board(self):
@@ -165,7 +199,7 @@ class Snake:
             return True
         return False
     
-    def calc_reward(self, snack, other_snake):
+    def calc_reward(self, snack, other_snake, previous_distance, currenct_distance):
         reward = 0
         win_self, win_other = False, False
         
@@ -173,13 +207,22 @@ class Snake:
             # TODO: Punish the snake for getting out of the board
             reward -= 100
             win_other = True
+            # print("state:")
+            # print(self.state)
+            # print("qtable")
+            # print(self.q_table[tuple(self.state)])
+            # print("----")
             reset(self, other_snake)
         
+        if previous_distance <= currenct_distance:
+            reward -= 5
+
         if self.head.pos == snack.pos:
             self.addCube()
             snack = Cube(randomSnack(ROWS, self), color=(0, 255, 0))
             # TODO: Reward the snake for eating
-            reward += 100
+            reward += 100    
+         
             
         if self.head.pos in list(map(lambda z: z.pos, self.body[1:])):
             # TODO: Punish the snake for hitting itself
@@ -205,14 +248,13 @@ class Snake:
                 else:
                     # TODO: Punish the snake for hitting the head of the other snake and being shorter
                     reward -= 10
-                    win_other = True
-                    
+                    win_other = True       
             reset(self, other_snake)
             
         return snack, reward, win_self, win_other
     
     def reset(self, pos):
-        self.epsilon *= 0.9
+        # self.epsilon *= 0.9
         self.head = Cube(pos, color=self.color)
         self.body = []
         self.body.append(self.head)
