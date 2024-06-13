@@ -26,7 +26,7 @@ def main():
         reward_2 = 0
         pygame.time.delay(25)
         clock.tick(10)
-        if iter == 10000:
+        if iter == 100:
             snake_1.decay_epsilon()
             # snake_1.decay_lr()
             snake_2.decay_epsilon()

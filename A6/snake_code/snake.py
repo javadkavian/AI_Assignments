@@ -21,14 +21,14 @@ class Snake:
         try:
             self.q_table = np.load(file_name)
         except:
-            self.q_table = np.zeros((2, 2, 2, 2, 12, 4))
+            self.q_table = np.zeros((2, 2, 2, 2, 2, 2, 4, 12, 4))
 
         self.lr = 0.1
-        self.discount_factor = 0.8
-        self.epsilon = 0.4
+        self.discount_factor = 0.9
+        self.epsilon = 0.5
 
     def decay_epsilon(self):
-        self.epsilon *= 0.5
+        self.epsilon *= 0.9
 
     def decay_lr(self):    
         self.lr *= 0.98    
@@ -36,16 +36,16 @@ class Snake:
     
     def get_optimal_policy(self, state):
         # Get the Q-values for the given state
-        q_values = self.q_table[tuple(state)]
+        # q_values = self.q_table[tuple(state)]
 
         # Find the indices of all maximum Q-values
-        max_indices = np.flatnonzero(q_values == np.max(q_values))
+        # max_indices = np.flatnonzero(q_values == np.max(q_values))
 
         # Randomly select one of the maximum indices
-        chosen_index = np.random.choice(max_indices)
+        # chosen_index = np.random.choice(max_indices)
 
-        return chosen_index
-        # return np.argmax(self.q_table[tuple(state)])
+        # return chosen_index
+        return np.argmax(self.q_table[tuple(state)])
 
     def make_action(self, state):
         chance = random.random()
@@ -63,13 +63,25 @@ class Snake:
         sample = reward + self.discount_factor*(np.max(self.q_table[tuple(next_state)]))
         self.q_table[tuple(state)][action] = (1 - self.lr)*self.q_table[tuple(state)][action] + self.lr*sample
 
-    
+    def get_direction(self):
+        if self.dirnx == 0:
+            if self.dirny == 0:
+                return 0
+            else:
+                return 1
+        else:
+            if self.dirny == 0:
+                return 2
+            else:
+                return 3        
 
     def get_around_head_positions(self):
         a1 = [0, 0]
         a2 = [0, 0]
         a3 = [0, 0]
         a4 = [0, 0]
+        a5 = [0, 0]
+        a6 = [0, 0]
         if self.dirnx == 0:
             a1[0] = self.head.pos[0] - 1
             a1[1] = self.head.pos[1]
@@ -77,8 +89,12 @@ class Snake:
             a2[1] = self.head.pos[1]
             a3[0] = self.head.pos[0]
             a3[1] = self.head.pos[1] + self.dirny
-            a4[0] = self.head.pos[0]
-            a4[1] = self.head.pos[1] - self.dirny
+            a4[0] = self.head.pos[0] - 2
+            a4[1] = self.head.pos[1]
+            a5[0] = self.head.pos[0] + 2
+            a5[1] = self.head.pos[1]
+            a6[0] = self.head.pos[0]
+            a6[1] = self.head.pos[1] + 2*self.dirny
         elif self.dirny == 0:
             a1[0] = self.head.pos[0]
             a1[1] = self.head.pos[1] - 1
@@ -86,10 +102,14 @@ class Snake:
             a2[1] = self.head.pos[1] + 1
             a3[0] = self.head.pos[0] + self.dirnx
             a3[1] = self.head.pos[1]
-            a4[0] = self.head.pos[0] - self.dirnx
-            a4[1] = self.head.pos[1]
+            a4[0] = self.head.pos[0]
+            a4[1] = self.head.pos[1] - 2
+            a5[0] = self.head.pos[0]
+            a5[1] = self.head.pos[1] + 2
+            a6[0] = self.head.pos[0] + 2*self.dirnx
+            a6[1] = self.head.pos[1]
 
-        return a1, a2, a3, a4
+        return a1, a2, a3, a4, a5, a6
     
     def check_wall_collision(self, pos):
         if pos[0] == 0 or pos[0] == ROWS-1 or pos[1] == 0 or pos[1] == ROWS-1:
@@ -145,11 +165,14 @@ class Snake:
 
     def move(self, snack : Cube, other_snake):
         self.state = []
-        a1, a2, a3, a4 = self.get_around_head_positions()
+        a1, a2, a3, a4, a5, a6= self.get_around_head_positions()
         self.state.append(self.check_barrier(a1, other_snake))
         self.state.append(self.check_barrier(a2, other_snake))
         self.state.append(self.check_barrier(a3, other_snake))
         self.state.append(self.check_barrier(a4, other_snake))
+        self.state.append(self.check_barrier(a5, other_snake))
+        self.state.append(self.check_barrier(a6, other_snake))
+        self.state.append(self.get_direction())
         self.state.append(self.get_direction_of_snack(snack))
 
         action = self.make_action(self.state)
@@ -183,11 +206,14 @@ class Snake:
 
         # TODO: Create new state after moving and other needed values and return them
         new_state = []
-        a1, a2, a3, a4 = self.get_around_head_positions()
+        a1, a2, a3, a4, a5, a6= self.get_around_head_positions()
         new_state.append(self.check_barrier(a1, other_snake))
         new_state.append(self.check_barrier(a2, other_snake))
         new_state.append(self.check_barrier(a3, other_snake))
         new_state.append(self.check_barrier(a4, other_snake))
+        new_state.append(self.check_barrier(a5, other_snake))
+        new_state.append(self.check_barrier(a6, other_snake))
+        new_state.append(self.get_direction())
         new_state.append(self.get_direction_of_snack(snack))
         return self.state, new_state, action
 
@@ -205,28 +231,23 @@ class Snake:
         
         if self.check_out_of_board():
             # TODO: Punish the snake for getting out of the board
-            reward -= 100
+            reward -= 200
             win_other = True
-            # print("state:")
-            # print(self.state)
-            # print("qtable")
-            # print(self.q_table[tuple(self.state)])
-            # print("----")
             reset(self, other_snake)
         
         if previous_distance <= currenct_distance:
-            reward -= 5
+            reward -= 50
 
         if self.head.pos == snack.pos:
             self.addCube()
             snack = Cube(randomSnack(ROWS, self), color=(0, 255, 0))
             # TODO: Reward the snake for eating
-            reward += 100    
+            reward += 300 
          
             
         if self.head.pos in list(map(lambda z: z.pos, self.body[1:])):
             # TODO: Punish the snake for hitting itself
-            reward -= 10
+            reward -= 200
             win_other = True
             reset(self, other_snake)
             
@@ -235,19 +256,19 @@ class Snake:
             
             if self.head.pos != other_snake.head.pos:
                 # TODO: Punish the snake for hitting the other snake
-                reward -= 10
+                reward -= 200
                 win_other = True
             else:
                 if len(self.body) > len(other_snake.body):
                     # TODO: Reward the snake for hitting the head of the other snake and being longer
-                    reward += 50
+                    reward += 10
                     win_self = True
                 elif len(self.body) == len(other_snake.body):
                     # TODO: No winner
                     reward -= 5
                 else:
                     # TODO: Punish the snake for hitting the head of the other snake and being shorter
-                    reward -= 10
+                    reward -= 300
                     win_other = True       
             reset(self, other_snake)
             
