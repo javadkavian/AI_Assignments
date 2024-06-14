@@ -50,15 +50,16 @@ def main():
 
         previous_distance1 = snake_1.get_distance_to_snack(snack)
         previous_distance2 = snake_2.get_distance_to_snack(snack)
+        distance1 = snake_1.get_distance_to_other_snake(snake_2)
         state_1, new_state_1, action_1 = snake_1.move(snack, snake_2)
         state_2, new_state_2, action_2 = snake_2.move(snack, snake_1)
-        
+        distance2 = snake_1.get_distance_to_other_snake(snake_2)
         current_distance1 = snake_1.get_distance_to_snack(snack)
         current_distance2 = snake_2.get_distance_to_snack(snack)
 
 
-        snack, reward_1, win_1, win_2 = snake_1.calc_reward(snack, snake_2, previous_distance1, current_distance1)
-        snack, reward_2, win_2, win_1 = snake_2.calc_reward(snack, snake_1, previous_distance2, current_distance2)
+        snack, reward_1, win_1, win_2 = snake_1.calc_reward(snack, snake_2, previous_distance1, current_distance1, distance1, distance2)
+        snack, reward_2, win_2, win_1 = snake_2.calc_reward(snack, snake_1, previous_distance2, current_distance2, distance1, distance2)
         snake_1.update_q_table(state_1, action_1, new_state_1, reward_1)
         snake_2.update_q_table(state_2, action_2, new_state_2, reward_2)
         
