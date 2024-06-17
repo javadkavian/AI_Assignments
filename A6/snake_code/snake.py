@@ -25,7 +25,7 @@ class Snake:
 
         self.lr = 0.1
         self.discount_factor = 0.9
-        self.epsilon = 0.5
+        self.epsilon = 0
 
     def decay_epsilon(self):
         self.epsilon *= 0.9
@@ -36,26 +36,17 @@ class Snake:
     
     def get_optimal_policy(self, state):
         # Get the Q-values for the given state
-        # q_values = self.q_table[tuple(state)]
-
-        # Find the indices of all maximum Q-values
-        # max_indices = np.flatnonzero(q_values == np.max(q_values))
-
-        # Randomly select one of the maximum indices
-        # chosen_index = np.random.choice(max_indices)
-
-        # return chosen_index
-        return np.argmax(self.q_table[tuple(state)])
+        q_values = self.q_table[tuple(state)]
+        max_indices = np.flatnonzero(q_values == np.max(q_values))
+        chosen_index = np.random.choice(max_indices)
+        return chosen_index
 
     def make_action(self, state):
         chance = random.random()
         if chance < self.epsilon:
             action = random.randint(0, 3)
-            # print("chance : ", action)
         else:
             action = self.get_optimal_policy(state)
-            # if action != 0:
-            # print("policy : ", action)
         return action
 
     def update_q_table(self, state, action, next_state, reward):
@@ -186,7 +177,6 @@ class Snake:
         self.state.append(self.check_barrier(a6, other_snake))
         self.state.append(self.check_barrier(a7, other_snake))
         self.state.append(self.check_barrier(a8, other_snake))
-        # self.state.append(self.get_direction())
         self.state.append(self.get_direction_of_snack(snack))
 
         action = self.make_action(self.state)
@@ -229,7 +219,6 @@ class Snake:
         new_state.append(self.check_barrier(a6, other_snake))
         new_state.append(self.check_barrier(a7, other_snake))
         new_state.append(self.check_barrier(a8, other_snake))
-        # new_state.append(self.get_direction())
         new_state.append(self.get_direction_of_snack(snack))
         return self.state, new_state, action
 
@@ -241,7 +230,7 @@ class Snake:
             return True
         return False
     
-    def calc_reward(self, snack, other_snake, previous_distance, currenct_distance, distance1, distance2):
+    def calc_reward(self, snack, other_snake, previous_distance, currenct_distance):
         reward = 0
         win_self, win_other = False, False
         
@@ -254,8 +243,6 @@ class Snake:
         if previous_distance <= currenct_distance:
             reward -= 50
 
-        if distance1 < distance2:
-            reward += 10    
 
         if self.head.pos == snack.pos:
             self.addCube()
@@ -280,7 +267,7 @@ class Snake:
             else:
                 if len(self.body) > len(other_snake.body):
                     # TODO: Reward the snake for hitting the head of the other snake and being longer
-                    reward += 10
+                    reward += 0
                     win_self = True
                 elif len(self.body) == len(other_snake.body):
                     # TODO: No winner
