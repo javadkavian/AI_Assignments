@@ -4,8 +4,7 @@ Welcome to my AI course assignments repository. This document provides an overvi
 
 ## Table of Contents  
 - [Assignment 1: Genetic Algorithm for Solving Knapsack Problem](#assignment-1-genetic-algorithm-for-solving-knapsack-problem)  
-- [Assignment 2: Hidden Markov Models for Voice Recognition]
-(#assignment-2-hidden-markov-models-for-voice-recognition)  
+- [Assignment 2: Hidden Markov Models for Voice Recognition](#assignment-2-hidden-markov-models-for-voice-recognition)  
 - [Assignment 3: Clustering the Iris Dataset Using K-Means and DBSCAN](#assignment-3-clustering-the-iris-dataset-using-k-means-and-dbscan)  
 - [Assignment 4: Machine Learning Methods - Regression, Boosting, and Decision Trees](#assignment-4-machine-learning-methods---regression-boosting-and-decision-trees)  
 - [Assignment 5: Neural Network and Training a CNN Model for Sentiment Classification of Tweets](#assignment-5-neural-network-and-training-a-cnn-model-for-sentiment-classification-of-tweets)  
